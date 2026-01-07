@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD7lwRC2lUwBM_wMNxH8ygdQxgqPS5QvVfalHPqWTuLcXckpsw8VfwwjMK9Lw1yYx3/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMqmLQEWYK8O_S9tqEIadSctpwEgiz_S8aOHlm5rgb3Q-kED4eaSTWk1-BTGWTM4OK-g/exec";
 
         const requestData = {
             personal: {

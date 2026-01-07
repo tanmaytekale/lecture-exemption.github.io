@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endTimes = formData.getAll('end_time[]');
 
         courses.forEach((course, index) => {
-            lectures.push({
+            data.lectures.push({
                 course: course,
                 faculty: faculties[index],
                 startTime: startTimes[index],
@@ -155,59 +155,78 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
-        const SCRIPT_URL = 'INSERT_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+        // Generate Flat Rows for SheetDB
+        // We are moving away from "Daily Tabs" to one "Master Sheet" with a Date column.
 
-        const requestData = {
-            personal: {
-                name: name,
-                app_id: appId
-            },
-            lectures: lectures,
-            reason: reason,
-            submittedAt: new Date().toISOString()
-        };
+        // 1. Get Form Values
+        const submissionDate = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
+        const name = data.personal.name;
+        const appId = data.personal.app_id;
+        const reason = data.reason;
+
+        // 2. Build Row Objects
+        // SheetDB expects an ARRAY of objects if we want to add multiple rows.
+        // Each object represents one row in the Excel/Google Sheet.
+
+        const payload = data.lectures.map((lecture, index) => {
+            // Logic for "Merged" look: Only show Name/AppID/Reason on the FIRST row of the batch.
+            // For subsequent lectures, leave those fields blank.
+            const isFirst = index === 0;
+
+            return {
+                "Date": isFirst ? submissionDate : "",
+                "Name": isFirst ? name : "",
+                "App ID": isFirst ? appId : "",
+                "Course": lecture.course,
+                "Faculty": lecture.faculty,
+                "Lecture Timing": `${lecture.startTime} - ${lecture.endTime}`,
+                "Reason": isFirst ? reason : ""
+            };
+        });
+
+        // REPLACE THIS WITH YOUR SHEETDB API URL
+        const SHEETDB_URL = 'INSERT_YOUR_SHEETDB_API_URL_HERE';
 
         try {
-            // Send to Google Apps Script
-            const response = await fetch(SCRIPT_URL, {
+            console.log("Sending request to:", SHEETDB_URL);
+
+            // SheetDB requires POST with a 'data' array for bulk insert
+            // or just the array directly depending on the endpoint style. 
+            // Standard API v1: POST /api/v1/{id} with body as JSON array.
+
+            const response = await fetch(SHEETDB_URL, {
                 method: 'POST',
-                body: JSON.stringify(requestData),
-                // 'no-cors' mode is often needed for GAS Web Apps if not handling OPTIONS correctly,
-                // but standard 'text/plain' usually works with redirect following.
-                // However, strictly adhering to JSON content type might trigger CORS preflight which GAS fails.
-                // Best practice for GAS: Send as text/plain (default) or straightforward string body.
                 headers: {
-                    "Content-Type": "text/plain;charset=utf-8",
-                }
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
 
-            // GAS usually returns a redirect or text response
+            // SheetDB returns JSON with created/updated info
             const result = await response.json();
             console.log('Server response:', result);
 
-            if (result.result === 'success') {
+            // SheetDB usually returns { created: N } or similar
+            if (response.ok) {
                 alert('Exemption request submitted successfully!');
                 document.getElementById('exemption-form').reset();
-                // Reset lectures to 1
+
+                // Reset UI
                 const dynamicEntries = lectureContainer.querySelectorAll('.lecture-entry:not(:first-child)');
                 dynamicEntries.forEach(el => el.remove());
                 lectureCount = 1;
-                updateLectureCounts(); // Ensure counts are correct after reset
+                updateLectureCounts();
 
-                // Reset Date
                 const today = new Date();
                 const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
                 document.getElementById('current-date').textContent = dateStr;
             } else {
                 console.error('Submission failed:', result);
-                alert('Error submitting request. Please try again.');
+                alert('Error submitting request. Check console for details.');
             }
         } catch (error) {
             console.error('Error:', error);
-            // Sometimes valid CORS opaque responses trigger error in fetch if we try to read JSON.
-            // For now, alert generic error.
-            alert('Form submitted! (Note: Check sheet to verify, as connection might vary)');
+            alert('Network error. Please check your connection.');
         } finally {
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;

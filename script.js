@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endTimes = formData.getAll('end_time[]');
 
         courses.forEach((course, index) => {
-            date.lectures.push({
+            data.lectures.push({
                 course: course,
                 faculty: faculties[index],
                 startTime: startTimes[index],
@@ -160,31 +160,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const requestData = {
             personal: {
-                name: name,
-                app_id: appId
+                name: data.personal.name,
+                app_id: data.personal.app_id
             },
-            lectures: lectures,
-            reason: reason,
+            lectures: data.lectures,
+            reason: data.reason,
             submittedAt: new Date().toISOString()
         };
 
         try {
             // Send to Google Apps Script
+            console.log("Sending request to:", SCRIPT_URL);
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify(requestData),
-                // 'no-cors' mode is often needed for GAS Web Apps if not handling OPTIONS correctly,
-                // but standard 'text/plain' usually works with redirect following.
-                // However, strictly adhering to JSON content type might trigger CORS preflight which GAS fails.
-                // Best practice for GAS: Send as text/plain (default) or straightforward string body.
                 headers: {
                     "Content-Type": "text/plain;charset=utf-8",
                 }
             });
 
-            // GAS usually returns a redirect or text response
-            const result = await response.json();
-            console.log('Server response:', result);
+            // Read raw text first to debug HTML errors
+            const responseText = await response.text();
+            console.log('Raw Server Response:', responseText);
+
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                throw new Error("Server returned non-JSON response: " + responseText.substring(0, 150) + "...");
+            }
+
+            console.log('Parsed Result:', result);
 
             if (result.result === 'success') {
                 alert('Exemption request submitted successfully!');
@@ -205,8 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error:', error);
-            // Sometimes valid CORS opaque responses trigger error in fetch if we try to read JSON.
-            // For now, alert generic error.
             alert('Form submitted! (Note: Check sheet to verify, as connection might vary)');
         } finally {
             submitBtn.innerHTML = originalText;

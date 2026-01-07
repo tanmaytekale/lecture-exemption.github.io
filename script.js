@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // REPLACE THIS WITH YOUR SHEETDB API URL
-        const SHEETDB_URL = 'INSERT_YOUR_SHEETDB_API_URL_HERE';
+        const SHEETDB_URL = "https://sheetdb.io/api/v1/ji96simaqki9d";
 
         try {
             console.log("Sending request to:", SHEETDB_URL);

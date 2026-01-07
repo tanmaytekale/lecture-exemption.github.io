@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endTimes = formData.getAll('end_time[]');
 
         courses.forEach((course, index) => {
-            lectures.push({
+            date.lectures.push({
                 course: course,
                 faculty: faculties[index],
                 startTime: startTimes[index],
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxD7lwRC2lUwBM_wMNxH8ygdQxgqPS5QvVfalHPqWTuLcXckpsw8VfwwjMK9Lw1yYx3/exec';
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD7lwRC2lUwBM_wMNxH8ygdQxgqPS5QvVfalHPqWTuLcXckpsw8VfwwjMK9Lw1yYx3/exec";
 
         const requestData = {
             personal: {

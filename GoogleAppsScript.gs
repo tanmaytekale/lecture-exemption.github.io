@@ -16,11 +16,11 @@ function doPost(e) {
   lock.tryLock(10000);
 
   try {
-    const doc = SpreadsheetApp.getActiveSpreadsheet();
+    // OPEN BY ID to ensure it always finds the sheet
+    const doc = SpreadsheetApp.openById("1v2u9XkK-8IQEpCaFrc7XxGg8IEb4AHdCf70X-sjADsg");
+    
     // 1. DETERMINE TAB NAME (DD-MM-YYYY)
     const now = new Date();
-    // Format date as DD-MM-YYYY (adjusting for IST if needed or using script timezone)
-    const Utilities = SpreadsheetApp.getActiveSpreadsheet(); // Re-referencing just to be safe
     const timeZone = doc.getSpreadsheetTimeZone();
     const dateStr = Utilities.formatDate(now, timeZone, "dd-MM-yyyy");
     

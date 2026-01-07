@@ -16,17 +16,43 @@ function doPost(e) {
   lock.tryLock(10000);
 
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet();
-    const exSheet = sheet.getSheetByName("Exemptions");
-    const dbSheet = sheet.getSheetByName("Database");
+    const doc = SpreadsheetApp.getActiveSpreadsheet();
+    // 1. DETERMINE TAB NAME (DD-MM-YYYY)
+    const now = new Date();
+    // Format date as DD-MM-YYYY (adjusting for IST if needed or using script timezone)
+    const Utilities = SpreadsheetApp.getActiveSpreadsheet(); // Re-referencing just to be safe
+    const timeZone = doc.getSpreadsheetTimeZone();
+    const dateStr = Utilities.formatDate(now, timeZone, "dd-MM-yyyy");
+    
+    // 2. GET OR CREATE SHEET
+    let exSheet = doc.getSheetByName(dateStr);
+    
+    if (!exSheet) {
+      exSheet = doc.insertSheet(dateStr);
+      // Set Headers for new sheet
+      exSheet.appendRow([
+        "Sr. No.", 
+        "Name", 
+        "App ID", 
+        "Year", 
+        "Role", 
+        "Course", 
+        "Faculty", 
+        "Lecture Timing", 
+        "Reason"
+      ]);
+      // Optional: Style headers
+      exSheet.getRange("A1:I1").setFontWeight("bold");
+    }
+
+    const dbSheet = doc.getSheetByName("Database");
+    if (!dbSheet) throw new Error("Database sheet not found! Please check instructions.");
     
     // Parse Request
     const data = JSON.parse(e.postData.contents);
-    const appId = String(data.personal.app_id).trim(); // Ensure string for comparison
+    const appId = String(data.personal.app_id).trim(); 
     
-    // 1. LOOKUP USER in "Database"
-    // Assuming App ID is in Column C (Index 2) of Database sheet
-    // And columns are: Sr, Name, App ID, Year, Role
+    // 3. LOOKUP USER in "Database"
     const dbData = dbSheet.getDataRange().getValues();
     let userDetails = { Name: "Unknown", Year: "Unknown", Role: "Unknown" };
     
@@ -40,10 +66,13 @@ function doPost(e) {
       }
     }
     
-    // 2. GENERATE ROWS
-    // Calculate next Sr. No. based on last row in Exemptions
+    // 4. GENERATE ROWS
+    // Calculate next Sr. No. based on last row in THIS daily sheet
     const lastRow = exSheet.getLastRow();
-    const nextSrNo = lastRow === 0 ? 1 : lastRow; // Simple counter approximation
+    // nextSrNo logic: If lastRow is 1 (headers only), start at 1. If >1, check previous Sr No? 
+    // Simple approach: Count rows - 1 (for header). If 0, then 1.
+    const rowCount = lastRow - 1;
+    const nextSrNo = rowCount < 0 ? 1 : rowCount + 1;
     
     let newRows = [];
     
@@ -79,13 +108,10 @@ function doPost(e) {
         row.push("");
       }
       
-      // Timestamp (Optional, maybe add as 10th column)
-      // row.push(new Date()); 
-      
       newRows.push(row);
     });
     
-    // 3. APPEND TO SHEET
+    // 5. APPEND TO SHEET
     if (newRows.length > 0) {
       exSheet.getRange(lastRow + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
     }

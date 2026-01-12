@@ -56,6 +56,112 @@ document.addEventListener('DOMContentLoaded', () => {
         setupTimeAutoFill(firstStartInput, firstEndInput);
     }
 
+    // Autofill Logic
+    function setupAutofill(input, ghost, list) {
+        if (!list) return;
+
+        // Find the accept button in this wrapper
+        const wrapper = input.parentElement;
+        const acceptBtn = wrapper.querySelector('.autofill-accept');
+
+        // Clean "Dr." or "Mr." for matching
+        const cleanName = (str) => str.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Prof\.)\s*/i, '');
+
+        function acceptSuggestion() {
+            if (ghost.hasAttribute('data-full-value')) {
+                input.value = ghost.getAttribute('data-full-value');
+                ghost.textContent = '';
+                ghost.removeAttribute('data-full-value');
+                if (acceptBtn) acceptBtn.classList.remove('visible');
+                input.dispatchEvent(new Event('change'));
+            }
+        }
+
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent focus loss issues
+                acceptSuggestion();
+            });
+            // Touch support
+            acceptBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                acceptSuggestion();
+            });
+        }
+
+        input.addEventListener('input', function () {
+            const val = this.value;
+            ghost.textContent = '';
+            ghost.removeAttribute('data-full-value');
+            if (acceptBtn) acceptBtn.classList.remove('visible');
+
+            if (!val || val.length < 2) return; // Wait for 2 chars
+
+            // Smart Match:
+            // 1. Prefix match (Priority)
+            // 2. Contains match (ignoring Dr.)
+
+            let match = list.find(item => item.toLowerCase().startsWith(val.toLowerCase()));
+
+            // If no prefix match, try "Contains" but on cleaned name (e.g. input "Suman" matches "Dr. Suman")
+            if (!match) {
+                match = list.find(item => {
+                    const cleaned = cleanName(item).toLowerCase();
+                    return cleaned.startsWith(val.toLowerCase()); // User starts typing name, ignores title
+                });
+            }
+
+            if (match) {
+                // Store the full value to use on accept
+                ghost.setAttribute('data-full-value', match);
+
+                // Show Accept Button
+                if (acceptBtn) acceptBtn.classList.add('visible');
+
+                // Ghost Text Visuals
+                if (match.toLowerCase().startsWith(val.toLowerCase()) && match.toLowerCase() !== val.toLowerCase()) {
+                    // 1. Exact Prefix Match (e.g. User: "Dr. Su", Match: "Dr. Suman")
+                    ghost.textContent = match;
+                } else {
+                    // 2. Smart Match (e.g. User: "Suman", Match: "Dr. Suman Madan")
+                    // Show "Suman Madan" as ghost text (aligns with "Suman")
+                    const cleaned = cleanName(match);
+                    if (cleaned.toLowerCase().startsWith(val.toLowerCase()) && cleaned.toLowerCase() !== val.toLowerCase()) {
+                        ghost.textContent = cleaned;
+                    }
+                }
+            }
+        });
+
+        input.addEventListener('keydown', function (e) {
+            // Tab or Right Arrow to accept
+            if ((e.key === 'Tab' || e.key === 'ArrowRight') && ghost.hasAttribute('data-full-value')) {
+                e.preventDefault();
+                acceptSuggestion();
+            }
+        });
+
+        // Clear on blur (Delayed to allow click)
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                ghost.textContent = '';
+                // Hide button slightly later? No, keep it if user comes back? 
+                // Standard behavior: clear suggestions on blur.
+                if (acceptBtn) acceptBtn.classList.remove('visible');
+            }, 200);
+        });
+    }
+
+    // Initialize Autofill for existing inputs
+    const initCourseInput = document.querySelector('input[name="course_name[]"]');
+    const initCourseGhost = initCourseInput.nextElementSibling;
+    if (typeof COURSES !== 'undefined') setupAutofill(initCourseInput, initCourseGhost, COURSES);
+
+    const initFacultyInput = document.querySelector('input[name="faculty_name[]"]');
+    const initFacultyGhost = initFacultyInput.nextElementSibling;
+    if (typeof FACULTIES !== 'undefined') setupAutofill(initFacultyInput, initFacultyGhost, FACULTIES);
+
+
     function createLectureEntry() {
         lectureCount++;
 
@@ -70,11 +176,23 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="form-group">
                 <label>Course Name</label>
-                <input type="text" name="course_name[]" required>
+                <div class="input-wrapper">
+                    <input type="text" name="course_name[]" required autocomplete="off">
+                    <span class="ghost-text"></span>
+                    <div class="autofill-accept" title="Accept Suggestion">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label>Faculty Name</label>
-                <input type="text" name="faculty_name[]" required>
+                <div class="input-wrapper">
+                    <input type="text" name="faculty_name[]" required autocomplete="off">
+                    <span class="ghost-text"></span>
+                    <div class="autofill-accept" title="Accept Suggestion">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label>Time Duration</label>
@@ -90,10 +208,19 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Setup auto-fill for new inputs
+        // Setup auto-fill for new inputs (Time)
         const startInput = entryDiv.querySelector('input[name="start_time[]"]');
         const endInput = entryDiv.querySelector('input[name="end_time[]"]');
         setupTimeAutoFill(startInput, endInput);
+
+        // Setup Smart Autofill for new inputs (Course/Faculty)
+        const courseInput = entryDiv.querySelector('input[name="course_name[]"]');
+        const courseGhost = courseInput.nextElementSibling;
+        if (typeof COURSES !== 'undefined') setupAutofill(courseInput, courseGhost, COURSES);
+
+        const facultyInput = entryDiv.querySelector('input[name="faculty_name[]"]');
+        const facultyGhost = facultyInput.nextElementSibling;
+        if (typeof FACULTIES !== 'undefined') setupAutofill(facultyInput, facultyGhost, FACULTIES);
 
         const removeBtn = entryDiv.querySelector('.remove-btn');
         removeBtn.addEventListener('click', () => {

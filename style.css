@@ -363,6 +363,17 @@ textarea {
   .autofill-accept.visible {
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(-50%) scale(1);
+  }
+
+  .suggestion-preview {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    margin-top: 0.25rem;
+    padding-left: 0.5rem;
+    font-weight: 500;
+    min-height: 1.2em;
+    /* Reserve space to prevent jarring layout shifts? Or allow shift? Allow shift is fine for now */
   }
 
   .form-group .input-wrapper .ghost-text {

@@ -66,6 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapper = input.parentElement;
         const acceptBtn = wrapper.querySelector('.autofill-accept');
 
+        // Create or find Suggestion Preview element (for non-aligning matches)
+        let preview = wrapper.parentElement.querySelector('.suggestion-preview');
+        if (!preview) {
+            preview = document.createElement('div');
+            preview.className = 'suggestion-preview';
+            wrapper.parentElement.appendChild(preview);
+        }
+
         // Clean "Dr." or "Mr." for matching
         const cleanName = (str) => str.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Prof\.)\s*/i, '');
 
@@ -73,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ghost.hasAttribute('data-full-value')) {
                 input.value = ghost.getAttribute('data-full-value');
                 ghost.textContent = '';
+                preview.textContent = ''; // Clear preview
                 ghost.removeAttribute('data-full-value');
                 if (acceptBtn) acceptBtn.classList.remove('visible');
                 input.dispatchEvent(new Event('change'));
@@ -92,25 +101,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         input.addEventListener('input', function () {
-            const val = this.value;
+            const val = this.value.toLowerCase().trim();
             ghost.textContent = '';
+            preview.textContent = '';
             ghost.removeAttribute('data-full-value');
             if (acceptBtn) acceptBtn.classList.remove('visible');
 
             if (!val || val.length < 2) return; // Wait for 2 chars
 
-            // Smart Match:
-            // 1. Prefix match (Priority)
-            // 2. Contains match (ignoring Dr.)
+            // Priority Matching
+            let match = null;
+            let matchType = ''; // 'prefix', 'cleaned_prefix', 'fuzzy'
 
-            let match = list.find(item => item.toLowerCase().startsWith(val.toLowerCase()));
+            // 1. Exact Prefix (e.g. "Basics" -> "Basics of Calculus")
+            match = list.find(item => item.toLowerCase().startsWith(val));
+            if (match) {
+                matchType = 'prefix';
+            } else {
+                // 2. Cleaned Prefix (e.g. "Suman" -> "Dr. Suman")
+                match = list.find(item => cleanName(item).toLowerCase().startsWith(val));
+                if (match) {
+                    matchType = 'cleaned_prefix';
+                } else {
+                    // 3. Word Start (e.g. "Calc" -> "Basics of Calculus")
+                    // Check if ANY word in the string starts with the input
+                    match = list.find(item => {
+                        const words = item.toLowerCase().split(/\s+/);
+                        // Checks if "Calc" matches start of "Calculus"
+                        return words.some(w => w.startsWith(val));
+                    });
 
-            // If no prefix match, try "Contains" but on cleaned name (e.g. input "Suman" matches "Dr. Suman")
-            if (!match) {
-                match = list.find(item => {
-                    const cleaned = cleanName(item).toLowerCase();
-                    return cleaned.startsWith(val.toLowerCase()); // User starts typing name, ignores title
-                });
+                    if (match) {
+                        matchType = 'fuzzy';
+                    } else {
+                        // 4. Any Substring (e.g. "chem" -> "Chemistry")
+                        // Usually covered by Word Start, but good fallback
+                        match = list.find(item => item.toLowerCase().includes(val));
+                        if (match) matchType = 'fuzzy';
+                    }
+                }
             }
 
             if (match) {
@@ -120,17 +149,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show Accept Button
                 if (acceptBtn) acceptBtn.classList.add('visible');
 
-                // Ghost Text Visuals
-                if (match.toLowerCase().startsWith(val.toLowerCase()) && match.toLowerCase() !== val.toLowerCase()) {
-                    // 1. Exact Prefix Match (e.g. User: "Dr. Su", Match: "Dr. Suman")
+                // Visual Feedback Strategy
+                if (matchType === 'prefix') {
+                    // Perfect alignment
                     ghost.textContent = match;
-                } else {
-                    // 2. Smart Match (e.g. User: "Suman", Match: "Dr. Suman Madan")
-                    // Show "Suman Madan" as ghost text (aligns with "Suman")
+                } else if (matchType === 'cleaned_prefix') {
+                    // Cleaned alignment (User: "Suman", Match: "Dr. Suman Madan")
                     const cleaned = cleanName(match);
-                    if (cleaned.toLowerCase().startsWith(val.toLowerCase()) && cleaned.toLowerCase() !== val.toLowerCase()) {
+                    if (cleaned.toLowerCase().startsWith(val)) {
                         ghost.textContent = cleaned;
+                    } else {
+                        // Fallback if logic fails unexpectedly
+                        preview.textContent = `Suggested: ${match}`;
                     }
+                } else {
+                    // Fuzzy / Word Match (User: "Madan", Match: "Dr. Suman Madan")
+                    // Cannot use ghost text. Show preview below.
+                    preview.textContent = `Suggested: ${match}`;
                 }
             }
         });
@@ -147,8 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('blur', () => {
             setTimeout(() => {
                 ghost.textContent = '';
-                // Hide button slightly later? No, keep it if user comes back? 
-                // Standard behavior: clear suggestions on blur.
+                preview.textContent = '';
                 if (acceptBtn) acceptBtn.classList.remove('visible');
             }, 200);
         });

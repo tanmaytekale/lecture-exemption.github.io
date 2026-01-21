@@ -56,12 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize auto-fill for the first static entry
     const firstStartInput = document.querySelector('input[name="start_time[]"]');
-    const firstEndInput = document.querySelector('input[name="end_time[]"]');
     if (firstStartInput && firstEndInput) {
         setupTimeAutoFill(firstStartInput, firstEndInput);
-        // Default to 12:00 -> 13:00
-        firstStartInput.value = "12:00";
-        firstEndInput.value = "13:00";
     }
 
     // Autofill Logic
@@ -215,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="datetime-row">
                 <div class="form-group date-group">
                     <label>Lecture Date</label>
-                    <input type="date" name="lecture_date[]" required>
+                    <input type="date" name="lecture_date[]" required readonly>
                 </div>
                 <div class="form-group time-group">
                     <label>Time Duration</label>
@@ -243,10 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add step attribute for 15 min intervals
         startInput.setAttribute('step', '900');
         endInput.setAttribute('step', '900');
-
-        // Default to 12:00 -> 13:00
-        startInput.value = "12:00";
-        endInput.value = "13:00";
 
         setupTimeAutoFill(startInput, endInput);
 

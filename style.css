@@ -301,18 +301,31 @@ textarea {
   }
 }
 
+/* DateTime Row Layout */
+.datetime-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.date-group {
+  flex: 1;
+  /* Takes roughly 1/3 */
+}
+
+.time-group {
+  flex: 2;
+  /* Takes roughly 2/3 */
+}
+
 /* Time Range Inputs */
 .time-range {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   align-items: center;
 }
 
-.time-input-wrapper {
-  flex: 1;
-  position: relative;
-}
-
+/* ... existing styles ... */
 .time-separator {
   color: var(--text-muted);
   font-weight: 600;
@@ -398,10 +411,23 @@ textarea {
   }
 
   /* Stack time inputs vertically on mobile */
-  .time-range {
+  .datetime-row {
     flex-direction: column;
-    align-items: stretch;
+    gap: 0;
+  }
+
+  .time-range {
+    flex-direction: row;
+    /* Keep time side-by-side on mobile if possible, or stack if too narrow */
     gap: 0.5rem;
+  }
+
+  /* If very small screen, stack time too */
+  @media (max-width: 400px) {
+    .time-range {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
 
   .time-separator {

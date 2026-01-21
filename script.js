@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Set default date for first entry
+    const todayISO = new Date().toISOString().split('T')[0];
+    const firstDateInput = document.querySelector('input[name="lecture_date[]"]');
+    if (firstDateInput) firstDateInput.value = todayISO;
+
     let lectureCount = 1;
 
     // Helper to handle auto-end time logic
@@ -195,18 +200,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             <div class="form-group">
-                <label>Time Duration</label>
-                <div class="time-range">
-                    <div class="time-input-wrapper">
-                        <input type="time" name="start_time[]" list="time-options" aria-label="Start Time" required>
+                <label>Faculty Name</label>
+                <div class="input-wrapper">
+                    <input type="text" name="faculty_name[]" required autocomplete="off">
+                    <span class="ghost-text"></span>
+                    <div class="autofill-accept" title="Accept Suggestion">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <div class="time-separator">to</div>
-                    <div class="time-input-wrapper">
-                        <input type="time" name="end_time[]" list="time-options" aria-label="End Time" required>
+                </div>
+            </div>
+            <div class="datetime-row">
+                <div class="form-group date-group">
+                    <label>Lecture Date</label>
+                    <input type="date" name="lecture_date[]" required>
+                </div>
+                <div class="form-group time-group">
+                    <label>Time Duration</label>
+                    <div class="time-range">
+                        <div class="time-input-wrapper">
+                            <input type="time" name="start_time[]" list="time-options" aria-label="Start Time" required>
+                        </div>
+                        <div class="time-separator">to</div>
+                        <div class="time-input-wrapper">
+                            <input type="time" name="end_time[]" list="time-options" aria-label="End Time" required>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
+
+        // Set default date
+        const dateInput = entryDiv.querySelector('input[name="lecture_date[]"]');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
 
         // Setup auto-fill for new inputs (Time)
         const startInput = entryDiv.querySelector('input[name="start_time[]"]');
@@ -272,13 +297,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const faculties = formData.getAll('faculty_name[]');
         const startTimes = formData.getAll('start_time[]');
         const endTimes = formData.getAll('end_time[]');
+        const dates = formData.getAll('lecture_date[]'); // Capture dates
 
         courses.forEach((course, index) => {
             data.lectures.push({
                 course: course,
                 faculty: faculties[index],
                 startTime: startTimes[index],
-                endTime: endTimes[index]
+                endTime: endTimes[index],
+                date: dates[index] // Store raw YYYY-MM-DD
             });
         });
 
@@ -286,7 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // We are moving away from "Daily Tabs" to one "Master Sheet" with a Date column.
 
         // 1. Get Form Values
-        const submissionDate = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
         const name = data.personal.name;
         const appId = data.personal.app_id;
         const reason = data.reason;
@@ -300,8 +326,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // For subsequent lectures, leave those fields blank.
             const isFirst = index === 0;
 
+            // Format Date: YYYY-MM-DD -> DD-MM-YYYY
+            let formattedDate = "";
+            if (lecture.date) {
+                const [y, m, d] = lecture.date.split('-');
+                formattedDate = `${d}-${m}-${y}`;
+            }
+
             return {
-                "Date": isFirst ? submissionDate : "",
+                "Date": formattedDate, // Send actual row date
                 "Name": isFirst ? name : "",
                 "App ID": isFirst ? appId : "",
                 "Course": lecture.course,

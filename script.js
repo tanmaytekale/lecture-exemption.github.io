@@ -231,10 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             <div class="form-group">
-                <label>Faculty Name</label>
-                <div class="input-wrapper">
-                    <input type="text" name="faculty_name[]" required autocomplete="off">
-                    <span class="ghost-text"></span>
+
                 <label>Time Duration</label>
                 <div class="time-range">
                     <div class="time-input-wrapper">

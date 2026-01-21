@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generate 5-minute interval time options (6 AM to 6 PM)
     const timeDatalist = document.getElementById('time-options');
     for (let h = 6; h <= 18; h++) {
-        for (let m = 0; m < 60; m += 5) {
+        for (let m = 0; m < 60; m += 15) {
             // Stop at 18:00 exactly
             if (h === 18 && m > 0) break;
 
@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const firstEndInput = document.querySelector('input[name="end_time[]"]');
     if (firstStartInput && firstEndInput) {
         setupTimeAutoFill(firstStartInput, firstEndInput);
+        // Default to 12:00 -> 13:00
+        firstStartInput.value = "12:00";
+        firstEndInput.value = "13:00";
     }
 
     // Autofill Logic
@@ -236,6 +239,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Setup auto-fill for new inputs (Time)
         const startInput = entryDiv.querySelector('input[name="start_time[]"]');
         const endInput = entryDiv.querySelector('input[name="end_time[]"]');
+
+        // Add step attribute for 15 min intervals
+        startInput.setAttribute('step', '900');
+        endInput.setAttribute('step', '900');
+
+        // Default to 12:00 -> 13:00
+        startInput.value = "12:00";
+        endInput.value = "13:00";
+
         setupTimeAutoFill(startInput, endInput);
 
         // Setup Smart Autofill for new inputs (Course/Faculty)

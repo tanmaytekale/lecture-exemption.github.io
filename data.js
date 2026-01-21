@@ -4,6 +4,7 @@
 const COURSES = [
     "Basics of Calculus 2",
     "PINNACLE 6",
+    "PINNACLE 2",
     "Secure Coding",
     "UI/UX Development",
     "Software Development Lifecycle, DevOps, and MLOps",
@@ -19,7 +20,15 @@ const COURSES = [
     "Physics 1",
     "Chemistry",
     "Biology",
-    "English Literature"
+    "English Literature",
+    "Recent Advances and Challenges in AI",
+    "Cybersecurity and Blockchain",
+    "Project Life Cycle Management",
+    "Entrepreneurship Development",
+    "Statistical Modelling PRACTICAL",
+    "Mathematics for Computer Science",
+    "Expository Writing",
+    "Indian Health Sciences"
 ];
 
 const FACULTIES = [
@@ -32,5 +41,9 @@ const FACULTIES = [
     "Dr. Sarika Chouhan",
     "Dr. Shashikant Patil",
     "Swarana Kolventi",
-    "Dr. Ekta Upadhya"
+    "Dr. Ekta Upadhya",
+    "Dr. Rabinder Henry",
+    "Aneesh Khanna",
+    "Dr. Naresh Kaushik",
+    "Dr. Rishika Aggrawal"
 ];

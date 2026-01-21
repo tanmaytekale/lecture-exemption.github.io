@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize auto-fill for the first static entry
     const firstStartInput = document.querySelector('input[name="start_time[]"]');
+    const firstEndInput = document.querySelector('input[name="end_time[]"]');
     if (firstStartInput && firstEndInput) {
         setupTimeAutoFill(firstStartInput, firstEndInput);
     }

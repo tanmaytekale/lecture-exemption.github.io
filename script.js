@@ -24,10 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Set default date for first entry
-    const todayISO = new Date().toISOString().split('T')[0];
-    const firstDateInput = document.querySelector('input[name="lecture_date[]"]');
-    if (firstDateInput) firstDateInput.value = todayISO;
+
 
     let lectureCount = 1;
 
@@ -203,42 +200,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="input-wrapper">
                     <input type="text" name="faculty_name[]" required autocomplete="off">
                     <span class="ghost-text"></span>
-                    <div class="autofill-accept" title="Accept Suggestion">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <label>Time Duration</label>
+                <div class="time-range">
+                    <div class="time-input-wrapper">
+                        <input type="time" name="start_time[]" list="time-options" aria-label="Start Time" required step="900">
                     </div>
-                </div>
-            </div>
-            <div class="datetime-row">
-                <div class="form-group date-group">
-                    <label>Lecture Date</label>
-                    <input type="date" name="lecture_date[]" required readonly>
-                </div>
-                <div class="form-group time-group">
-                    <label>Time Duration</label>
-                    <div class="time-range">
-                        <div class="time-input-wrapper">
-                            <input type="time" name="start_time[]" list="time-options" aria-label="Start Time" required>
-                        </div>
-                        <div class="time-separator">to</div>
-                        <div class="time-input-wrapper">
-                            <input type="time" name="end_time[]" list="time-options" aria-label="End Time" required>
-                        </div>
+                    <div class="time-separator">to</div>
+                    <div class="time-input-wrapper">
+                        <input type="time" name="end_time[]" list="time-options" aria-label="End Time" required step="900">
                     </div>
                 </div>
             </div>
         `;
 
         // Set default date
-        const dateInput = entryDiv.querySelector('input[name="lecture_date[]"]');
-        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+        // const dateInput = entryDiv.querySelector('input[name="lecture_date[]"]');
+        // if (dateInput) dateInput.value = new Date().toISOString().split('T')[0]; // Removed as per instruction
 
         // Setup auto-fill for new inputs (Time)
         const startInput = entryDiv.querySelector('input[name="start_time[]"]');
         const endInput = entryDiv.querySelector('input[name="end_time[]"]');
 
-        // Add step attribute for 15 min intervals
-        startInput.setAttribute('step', '900');
-        endInput.setAttribute('step', '900');
+        // Add step attribute for 15 min intervals (already in template, but keeping this for robustness if template changes)
+        // startInput.setAttribute('step', '900'); // Removed as per instruction, already in template
+        // endInput.setAttribute('step', '900'); // Removed as per instruction, already in template
 
         setupTimeAutoFill(startInput, endInput);
 
@@ -301,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const faculties = formData.getAll('faculty_name[]');
         const startTimes = formData.getAll('start_time[]');
         const endTimes = formData.getAll('end_time[]');
-        const dates = formData.getAll('lecture_date[]'); // Capture dates
+        // const dates = formData.getAll('lecture_date[]'); // Capture dates - Removed as per instruction
 
         courses.forEach((course, index) => {
             data.lectures.push({
@@ -309,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 faculty: faculties[index],
                 startTime: startTimes[index],
                 endTime: endTimes[index],
-                date: dates[index] // Store raw YYYY-MM-DD
+                // date: dates[index] // Store raw YYYY-MM-DD - Removed as per instruction
             });
         });
 
@@ -321,7 +306,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const appId = data.personal.app_id;
         const reason = data.reason;
 
-        // 2. Build Row Objects
+        // 2. Calculate IST Date (DD-MM-YYYY)
+        // using 'en-GB' gives DD/MM/YYYY, we enforce Asia/Kolkata timezone
+        const istDate = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }).replace(/\//g, '-');
+
+        // 3. Build Row Objects
         // SheetDB expects an ARRAY of objects if we want to add multiple rows.
         // Each object represents one row in the Excel/Google Sheet.
 
@@ -330,15 +319,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // For subsequent lectures, leave those fields blank.
             const isFirst = index === 0;
 
-            // Format Date: YYYY-MM-DD -> DD-MM-YYYY
-            let formattedDate = "";
-            if (lecture.date) {
-                const [y, m, d] = lecture.date.split('-');
-                formattedDate = `${d}-${m}-${y}`;
-            }
+            // Format Date: YYYY-MM-DD -> DD-MM-YYYY - Removed as per instruction
+            // let formattedDate = "";
+            // if (lecture.date) {
+            //     const [y, m, d] = lecture.date.split('-');
+            //     formattedDate = `${d}-${m}-${y}`;
+            // }
 
             return {
-                "Date": formattedDate, // Send actual row date
+                "Date": istDate, // Always send IST date
                 "Name": isFirst ? name : "",
                 "App ID": isFirst ? appId : "",
                 "Course": lecture.course,

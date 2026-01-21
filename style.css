@@ -301,23 +301,6 @@ textarea {
   }
 }
 
-/* DateTime Row Layout */
-.datetime-row {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.date-group {
-  flex: 1;
-  /* Takes roughly 1/3 */
-}
-
-.time-group {
-  flex: 2;
-  /* Takes roughly 2/3 */
-}
-
 /* Time Range Inputs */
 .time-range {
   display: flex;
@@ -411,11 +394,6 @@ textarea {
   }
 
   /* Stack time inputs vertically on mobile */
-  .datetime-row {
-    flex-direction: column;
-    gap: 0;
-  }
-
   .time-range {
     flex-direction: row;
     /* Keep time side-by-side on mobile if possible, or stack if too narrow */
